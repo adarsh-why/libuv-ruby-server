@@ -1,33 +1,44 @@
 require 'libuv'
-webserver = TCPServer.new('localhost', 3000)
 
 def generate_response request_hash
-    puts "\n HTTP response \n"
     response_hash = {}
     if request_hash.has_key?("Host")
         response_hash["Host"] = request_hash["Host"]
     end
-    p response_hash
 end
 
-while connection = webserver.accept
-    request_hash = {}
-    request = connection.gets.chomp
-    method, url, version = request.split('/')
-    puts "method is #{method}"
-    puts "url is #{url}"
-    puts "version is #{version}"
-    while true
-        request = connection.gets
-        key,value = request.split(':')
-        break if request == "\r\n"
-        request_hash[key] = value
+def send_to_browser url
+    page = url.gsub('HTTP','').strip
+    
+    if page == ""
+        page = "index.html"
+    elsif page == "index.html"
+        page = "index.html"
+    else page = "404.html"
     end
-
-    puts "\n HTTP request \n"
-    request_hash.each {|key, val| puts "#{key.chomp} : #{val}"} 
-       
-    generate_response(request_hash)
-    connection.puts "Hi, Welcome to Libuv Server"
-    connection.close
+    
+    file = File.open(page, 'r')
+    return content = file.read()       
 end
+
+def start_server
+    server = TCPServer.new('localhost', 3000)
+    
+    while connection = server.accept
+        request_hash = {}
+        request = connection.gets.chomp
+        method, url, version = request.split('/')
+        while true
+            request = connection.gets
+            key,value = request.split(':')
+            break if request == "\r\n"
+            request_hash[key] = value
+        end
+
+        generate_response(request_hash)
+        connection.puts(send_to_browser(url))
+        connection.close
+    end
+end
+
+start_server
