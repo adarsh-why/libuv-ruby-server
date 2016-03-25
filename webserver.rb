@@ -18,7 +18,16 @@ def response_content_type request_hash
 end
 
 def response_connection request_hash
-    puts "Connection: #{request_hash["Connection"]}\n\n"
+    puts "Connection: #{request_hash["Connection"]}"
+end
+
+def response_url url
+    if url == ""
+        request_page = 'index.html'
+    else
+        request_page = url.gsub('HTTP','').strip
+    end
+    puts "Requested page: #{request_page}\n\n"
 end
 
 def send_to_browser url
@@ -42,6 +51,7 @@ def start_server
         request_hash = {}
         request = connection.gets.chomp
         method, url, version = request.split('/')
+        next if url.gsub('HTTP','').strip == 'favicon.ico'
         while true
             request = connection.gets
             key,value = request.split(':')
@@ -56,6 +66,7 @@ def start_server
         response_date
         response_content_type request_hash
         response_connection request_hash
+        response_url url
 
         connection.puts(html)
         connection.close
